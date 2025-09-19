@@ -37,7 +37,9 @@ app.use(passport.session());
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID!,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-  callbackURL: "/auth/google/callback"
+  callbackURL: process.env.NODE_ENV === 'production' 
+    ? `https://${process.env.REPLIT_DEV_DOMAIN}/auth/google/callback`
+    : `https://e90ca2a5-826d-4643-9333-6b53a4f7928d-00-2v0asdc3qu6kp.worf.replit.dev/auth/google/callback`
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const user: User = {
