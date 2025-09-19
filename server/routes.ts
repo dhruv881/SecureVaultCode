@@ -1,6 +1,22 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+
+// Authenticated user interface
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    picture?: string;
+  };
+}
+
+// Helper to get user ID from authenticated request
+const getUserId = (req: Request): string => {
+  const authReq = req as AuthenticatedRequest;
+  return authReq.user?.id || 'anonymous';
+};
 import { insertDocumentSchema, insertReminderSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
@@ -20,14 +36,14 @@ const upload = multer({
   }
 });
 
-// Mock user ID for demo - in real app this would come from authentication
-const DEMO_USER_ID = "demo-user-123";
+// Users are now authenticated via Google OAuth
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get dashboard stats
   app.get("/api/dashboard/stats", async (req, res) => {
     try {
-      const stats = await storage.getDocumentStats(DEMO_USER_ID);
+      const userId = getUserId(req);
+      const stats = await storage.getDocumentStats(userId);
       res.json(stats);
     } catch (error) {
       res.status(500).json({ error: "Failed to get dashboard stats" });
@@ -40,12 +56,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { category, search } = req.query;
       let documents;
 
+      const userId = getUserId(req);
       if (search) {
-        documents = await storage.searchDocuments(DEMO_USER_ID, search as string);
+        documents = await storage.searchDocuments(userId, search as string);
       } else if (category) {
-        documents = await storage.getDocumentsByCategory(DEMO_USER_ID, category as string);
+        documents = await storage.getDocumentsByCategory(userId, category as string);
       } else {
-        documents = await storage.getDocuments(DEMO_USER_ID);
+        documents = await storage.getDocuments(userId);
       }
 
       res.json(documents);
@@ -57,7 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get single document
   app.get("/api/documents/:id", async (req, res) => {
     try {
-      const document = await storage.getDocument(req.params.id, DEMO_USER_ID);
+      const document = await storage.getDocument(req.params.id, getUserId(req));
       if (!document) {
         return res.status(404).json({ error: "Document not found" });
       }
@@ -80,7 +97,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const detectedCategory = category || categorizeDocument(req.file.originalname, req.file.mimetype);
 
       const documentData = {
-        userId: DEMO_USER_ID,
+        userId: getUserId(req),
         filename: req.file.filename,
         originalName: req.file.originalname,
         mimeType: req.file.mimetype,
@@ -110,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (scanResult.expiryDate && scanResult.confidence > 0.7) {
             console.log(`Found expiry date: ${scanResult.expiryDate} (confidence: ${scanResult.confidence})`);
             // Update the document with the scanned expiry date
-            const updatedDocument = await storage.updateDocument(document.id, DEMO_USER_ID, {
+            const updatedDocument = await storage.updateDocument(document.id, getUserId(req), {
               expiryDate: new Date(scanResult.expiryDate)
             });
             if (updatedDocument) {
@@ -125,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create automatic reminders for documents with expiry dates
       if (document.expiryDate) {
-        await createExpiryReminders(document);
+        await createExpiryReminders(document, getUserId(req));
       }
 
       res.json(document);
@@ -138,7 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete document
   app.delete("/api/documents/:id", async (req, res) => {
     try {
-      const success = await storage.deleteDocument(req.params.id, DEMO_USER_ID);
+      const success = await storage.deleteDocument(req.params.id, getUserId(req));
       if (!success) {
         return res.status(404).json({ error: "Document not found" });
       }
@@ -156,9 +173,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (upcoming) {
         const days = parseInt(upcoming as string) || 30;
-        reminders = await storage.getUpcomingReminders(DEMO_USER_ID, days);
+        reminders = await storage.getUpcomingReminders(getUserId(req), days);
       } else {
-        reminders = await storage.getActiveReminders(DEMO_USER_ID);
+        reminders = await storage.getActiveReminders(getUserId(req));
       }
 
       res.json(reminders);
@@ -172,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const reminderData = {
         ...req.body,
-        userId: DEMO_USER_ID,
+        userId: getUserId(req),
         reminderDate: new Date(req.body.reminderDate),
       };
 
@@ -191,7 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get categories
   app.get("/api/categories", async (req, res) => {
     try {
-      const categories = await storage.getCategoriesWithCounts(DEMO_USER_ID);
+      const categories = await storage.getCategoriesWithCounts(getUserId(req));
       res.json(categories);
     } catch (error) {
       res.status(500).json({ error: "Failed to get categories" });
@@ -213,7 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Find the document to get proper mime type and verify access
-      const document = await storage.getDocuments(DEMO_USER_ID).then(docs => 
+      const document = await storage.getDocuments(getUserId(req)).then(docs => 
         docs.find(doc => doc.filename === filename)
       );
       
@@ -263,7 +280,7 @@ function extractMetadata(file: Express.Multer.File): Record<string, any> {
   };
 }
 
-async function createExpiryReminders(document: any): Promise<void> {
+async function createExpiryReminders(document: any, userId: string): Promise<void> {
   if (!document.expiryDate) return;
 
   const expiryDate = new Date(document.expiryDate);
@@ -279,7 +296,7 @@ async function createExpiryReminders(document: any): Promise<void> {
 
     if (reminderDate > new Date()) {
       await storage.createReminder({
-        userId: DEMO_USER_ID,
+        userId: userId,
         documentId: document.id,
         reminderDate,
         message: reminder.message,

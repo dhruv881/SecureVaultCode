@@ -34,10 +34,13 @@ The application uses a dual-storage approach:
 - **File Storage**: Local file system storage for uploaded documents with organized directory structure
 
 ## Authentication and Authorization
-Currently implements a demo authentication system:
-- **Demo Mode**: Uses a hardcoded demo user ID for development and testing
-- **Session Management**: Basic session handling preparation with connect-pg-simple for PostgreSQL sessions
-- **Security Preparation**: Infrastructure ready for implementing proper authentication and authorization
+Implements production-ready Google OAuth authentication system:
+- **Google OAuth**: Secure authentication using Google OAuth 2.0 with Passport.js strategy
+- **Session Management**: Express sessions with connect-pg-simple for PostgreSQL session persistence
+- **Centralized Auth State**: useAuth() hook provides single source of truth for authentication state
+- **Route Protection**: All API endpoints secured with requireAuth middleware, frontend routes redirect to login when unauthenticated
+- **Secure Logout**: POST-based logout with proper session cleanup and query cache clearing
+- **User Management**: All operations scoped to authenticated user ID, replacing previous demo mode
 
 ## External Dependencies
 - **Database Provider**: Neon Database (@neondatabase/serverless) for PostgreSQL hosting
@@ -46,5 +49,14 @@ Currently implements a demo authentication system:
 - **Date Handling**: date-fns for comprehensive date manipulation and formatting
 - **File Processing**: Multer for handling multipart/form-data uploads
 - **Development Tools**: Replit-specific plugins for enhanced development experience in the Replit environment
+
+# Recent Changes
+
+- **September 19, 2025**: Implemented complete Google OAuth authentication system
+  - Created centralized useAuth() hook with proper 401 handling (returns null instead of errors)
+  - Fixed authentication loading loop by using null-based control flow instead of error-based
+  - Updated all API routes to require authentication with proper user scoping
+  - Secured file uploads, document management, and reminder creation to authenticated users
+  - Added login page with Google sign-in integration and logout functionality
 
 The architecture emphasizes type safety, developer experience, and scalability while maintaining simplicity for rapid development and deployment.
