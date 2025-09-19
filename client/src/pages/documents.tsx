@@ -34,16 +34,13 @@ export default function Documents() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [, setLocation] = useLocation();
-
-  // Get category from URL parameters
+  const [location, setLocation] = useLocation();
+  
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const categoryParam = urlParams.get('category');
-    if (categoryParam) {
-      setSelectedCategory(categoryParam);
-    }
-  }, []);
+    setSelectedCategory(categoryParam || "");
+  }, [location]);
 
   const { data: categories = [] } = useQuery<any[]>({
     queryKey: ['/api/categories'],
