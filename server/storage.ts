@@ -205,6 +205,16 @@ export class MemStorage implements IStorage {
     return Array.from(this.categories.values());
   }
 
+  async getCategoriesWithCounts(userId: string): Promise<(Category & { documentCount: number })[]> {
+    const categories = Array.from(this.categories.values());
+    const userDocuments = await this.getDocuments(userId);
+    
+    return categories.map(category => {
+      const documentCount = userDocuments.filter(doc => doc.category === category.name).length;
+      return { ...category, documentCount };
+    });
+  }
+
   async createCategory(insertCategory: InsertCategory): Promise<Category> {
     const id = randomUUID();
     const category: Category = { ...insertCategory, id, description: insertCategory.description || null };

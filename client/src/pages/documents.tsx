@@ -22,6 +22,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import DocumentCard from "@/components/document-card";
+import DocumentPreview from "@/components/document-preview";
 import { Document } from "@shared/schema";
 import { useLocation } from "wouter";
 
@@ -31,6 +32,8 @@ export default function Documents() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState("uploadedAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -126,17 +129,27 @@ export default function Documents() {
   };
 
   const handleView = (document: Document) => {
-    toast({
-      title: "Document Preview",
-      description: "Document preview functionality will be implemented soon.",
-    });
+    setPreviewDocument(document);
+    setIsPreviewOpen(true);
   };
 
-  const handleDownload = (document: Document) => {
+  const handleDownload = (doc: Document) => {
     toast({
       title: "Download Started",
-      description: `Downloading ${document.originalName}...`,
+      description: `Downloading ${doc.originalName}...`,
     });
+    // Create download link
+    const link = document.createElement('a');
+    link.href = `/uploads/${doc.filename}`;
+    link.download = doc.originalName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleClosePreview = () => {
+    setIsPreviewOpen(false);
+    setPreviewDocument(null);
   };
 
   return (
@@ -316,6 +329,14 @@ export default function Documents() {
           </div>
         )}
       </div>
+      
+      {/* Document Preview Modal */}
+      <DocumentPreview
+        document={previewDocument}
+        isOpen={isPreviewOpen}
+        onClose={handleClosePreview}
+        onDownload={handleDownload}
+      />
     </div>
   );
 }

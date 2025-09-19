@@ -8,9 +8,12 @@ import { useToast } from "@/hooks/use-toast";
 
 interface UploadZoneProps {
   onUploadSuccess?: (document: any) => void;
+  category?: string;
+  expiryDate?: string;
+  tags?: string[];
 }
 
-export default function UploadZone({ onUploadSuccess }: UploadZoneProps) {
+export default function UploadZone({ onUploadSuccess, category, expiryDate, tags }: UploadZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -46,9 +49,20 @@ export default function UploadZone({ onUploadSuccess }: UploadZoneProps) {
       const formData = new FormData();
       formData.append('file', file);
       
+      // Add metadata if provided
+      if (category) {
+        formData.append('category', category);
+      }
+      if (expiryDate) {
+        formData.append('expiryDate', expiryDate);
+      }
+      if (tags && tags.length > 0) {
+        formData.append('tags', JSON.stringify(tags));
+      }
+      
       uploadMutation.mutate(formData);
     });
-  }, [uploadMutation]);
+  }, [uploadMutation, category, expiryDate, tags]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

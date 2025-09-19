@@ -89,7 +89,7 @@ export default function Sidebar() {
                   >
                     <Icon className="w-4 h-4" />
                     {category.name}
-                    <span className="ml-auto text-xs">0</span>
+                    <span className="ml-auto text-xs">{category.documentCount || 0}</span>
                   </div>
                 </Link>
               );

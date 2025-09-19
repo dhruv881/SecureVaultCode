@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Search, Bell, Camera, Download } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,8 +10,17 @@ import StatsGrid from "@/components/stats-grid";
 import UploadZone from "@/components/upload-zone";
 import DocumentCard from "@/components/document-card";
 import { Document } from "@shared/schema";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import DocumentPreview from "@/components/document-preview";
 
 export default function Dashboard() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  
   const { data: documents = [], isLoading: documentsLoading } = useQuery<Document[]>({
     queryKey: ['/api/documents'],
   });
@@ -18,6 +28,58 @@ export default function Dashboard() {
   const { data: reminders = [] } = useQuery<any[]>({
     queryKey: ['/api/reminders', { upcoming: 7 }],
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (documentId: string) => {
+      return await apiRequest("DELETE", `/api/documents/${documentId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      toast({
+        title: "Document deleted",
+        description: "Document has been successfully deleted.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete document. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleView = (document: Document) => {
+    setPreviewDocument(document);
+    setIsPreviewOpen(true);
+  };
+
+  const handleDelete = (document: Document) => {
+    if (window.confirm(`Are you sure you want to delete "${document.originalName}"?`)) {
+      deleteMutation.mutate(document.id);
+    }
+  };
+
+  const handleDownload = (doc: Document) => {
+    toast({
+      title: "Download Started",
+      description: `Downloading ${doc.originalName}...`,
+    });
+    // Create download link
+    const link = document.createElement('a');
+    link.href = `/uploads/${doc.filename}`;
+    link.download = doc.originalName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleClosePreview = () => {
+    setIsPreviewOpen(false);
+    setPreviewDocument(null);
+  };
 
   const recentDocuments = documents.slice(0, 4);
   const upcomingReminders = reminders.slice(0, 3);
@@ -96,7 +158,13 @@ export default function Dashboard() {
                 ) : (
                   <div className="space-y-3">
                     {recentDocuments.map((document: Document) => (
-                      <DocumentCard key={document.id} document={document} />
+                      <DocumentCard 
+                        key={document.id} 
+                        document={document}
+                        onView={handleView}
+                        onDelete={handleDelete}
+                        onDownload={handleDownload}
+                      />
                     ))}
                   </div>
                 )}
@@ -257,6 +325,14 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      
+      {/* Document Preview Modal */}
+      <DocumentPreview
+        document={previewDocument}
+        isOpen={isPreviewOpen}
+        onClose={handleClosePreview}
+        onDownload={handleDownload}
+      />
     </div>
   );
 }

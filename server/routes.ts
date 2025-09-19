@@ -166,7 +166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get categories
   app.get("/api/categories", async (req, res) => {
     try {
-      const categories = await storage.getCategories();
+      const categories = await storage.getCategoriesWithCounts(DEMO_USER_ID);
       res.json(categories);
     } catch (error) {
       res.status(500).json({ error: "Failed to get categories" });

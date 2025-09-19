@@ -108,7 +108,12 @@ export default function Upload() {
       <div className="flex-1 p-6 overflow-auto">
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Upload Zone */}
-          <UploadZone onUploadSuccess={handleUploadSuccess} />
+          <UploadZone 
+            onUploadSuccess={handleUploadSuccess}
+            category={selectedCategory}
+            expiryDate={expiryDate}
+            tags={tags}
+          />
 
           {/* Upload Settings */}
           <Card>
