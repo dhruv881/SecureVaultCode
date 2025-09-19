@@ -32,6 +32,7 @@ export default function UploadZone({ onUploadSuccess, category, expiryDate, tags
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
       
       onUploadSuccess?.(document);
     },

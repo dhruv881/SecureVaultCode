@@ -29,6 +29,18 @@ export default function Dashboard() {
     queryKey: ['/api/reminders', { upcoming: 7 }],
   });
 
+  const { data: stats } = useQuery<any>({
+    queryKey: ['/api/dashboard/stats'],
+  });
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  };
+
   const deleteMutation = useMutation({
     mutationFn: async (documentId: string) => {
       return await apiRequest("DELETE", `/api/documents/${documentId}`);
@@ -213,9 +225,14 @@ export default function Dashboard() {
                   <div>
                     <div className="flex justify-between text-sm mb-2">
                       <span>Used Storage</span>
-                      <span className="text-muted-foreground">2.4 GB / 10 GB</span>
+                      <span className="text-muted-foreground">
+                        {formatFileSize(stats?.storageUsed || 0)} / 10 GB
+                      </span>
                     </div>
-                    <Progress value={24} className="h-2" />
+                    <Progress 
+                      value={((stats?.storageUsed || 0) / (10 * 1024 * 1024 * 1024)) * 100} 
+                      className="h-2" 
+                    />
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center text-sm">
@@ -223,21 +240,27 @@ export default function Dashboard() {
                         <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                         <span>PDFs</span>
                       </div>
-                      <span className="text-muted-foreground">1.2 GB</span>
+                      <span className="text-muted-foreground">
+                        {formatFileSize(stats?.storageByType?.pdfs || 0)}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                         <span>Images</span>
                       </div>
-                      <span className="text-muted-foreground">800 MB</span>
+                      <span className="text-muted-foreground">
+                        {formatFileSize(stats?.storageByType?.images || 0)}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                         <span>Documents</span>
                       </div>
-                      <span className="text-muted-foreground">400 MB</span>
+                      <span className="text-muted-foreground">
+                        {formatFileSize(stats?.storageByType?.documents || 0)}
+                      </span>
                     </div>
                   </div>
                 </div>

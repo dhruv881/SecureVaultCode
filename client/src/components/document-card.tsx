@@ -75,6 +75,17 @@ export default function DocumentCard({ document, onView, onDelete, onDownload }:
                   <span>{document.category}</span>
                   <span>•</span>
                   <span>{format(new Date(document.uploadedAt), "MMM d, yyyy")}</span>
+                  {document.expiryDate && (
+                    <>
+                      <span>•</span>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        <span className="text-orange-600 font-medium">
+                          Expires: {format(new Date(document.expiryDate), "MMM d, yyyy")}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
               

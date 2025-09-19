@@ -173,6 +173,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serve uploaded files
+  app.get("/uploads/:filename", async (req, res) => {
+    try {
+      // Sanitize filename to prevent path traversal attacks
+      const filename = path.basename(req.params.filename);
+      const filePath = path.join(process.cwd(), 'uploads', filename);
+      
+      // Ensure the resolved path is within the uploads directory
+      const uploadsDir = path.resolve(process.cwd(), 'uploads');
+      const resolvedPath = path.resolve(filePath);
+      if (!resolvedPath.startsWith(uploadsDir)) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      // Find the document to get proper mime type and verify access
+      const document = await storage.getDocuments(DEMO_USER_ID).then(docs => 
+        docs.find(doc => doc.filename === filename)
+      );
+      
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      
+      // Check if file exists and send it with proper content type
+      await fs.access(resolvedPath);
+      res.type(document.mimeType);
+      res.sendFile(resolvedPath);
+    } catch (error) {
+      res.status(404).json({ error: "File not found" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
@@ -181,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 function categorizeDocument(filename: string, mimeType: string): string {
   const name = filename.toLowerCase();
   
-  if (name.includes('passport') || name.includes('license') || name.includes('id')) {
+  if (name.includes('passport') || name.includes('license') || name.includes('id') || name.includes('brp') || name.includes('biometric') || name.includes('residence permit')) {
     return 'Identity Documents';
   } else if (name.includes('bill') || name.includes('utility') || name.includes('invoice')) {
     return 'Bills & Utilities';

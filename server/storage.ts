@@ -34,6 +34,11 @@ export interface IStorage {
     expiringSoon: number;
     storageUsed: number;
     byCategory: Record<string, number>;
+    storageByType: {
+      pdfs: number;
+      images: number;
+      documents: number;
+    };
   }>;
 }
 
@@ -228,6 +233,11 @@ export class MemStorage implements IStorage {
     expiringSoon: number;
     storageUsed: number;
     byCategory: Record<string, number>;
+    storageByType: {
+      pdfs: number;
+      images: number;
+      documents: number;
+    };
   }> {
     const userDocs = Array.from(this.documents.values()).filter(doc => doc.userId === userId);
     const now = new Date();
@@ -245,11 +255,19 @@ export class MemStorage implements IStorage {
       byCategory[doc.category] = (byCategory[doc.category] || 0) + 1;
     });
 
+    // Calculate storage by file type
+    const storageByType = {
+      pdfs: userDocs.filter(doc => doc.mimeType.includes('pdf')).reduce((total, doc) => total + doc.size, 0),
+      images: userDocs.filter(doc => doc.mimeType.includes('image')).reduce((total, doc) => total + doc.size, 0),
+      documents: userDocs.filter(doc => doc.mimeType.includes('document') || doc.mimeType.includes('msword') || doc.mimeType.includes('wordprocessingml')).reduce((total, doc) => total + doc.size, 0)
+    };
+
     return {
       totalDocuments: userDocs.length,
       expiringSoon,
       storageUsed,
       byCategory,
+      storageByType,
     };
   }
 }
