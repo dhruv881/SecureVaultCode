@@ -36,7 +36,7 @@ app.use(passport.session());
 // Passport Google OAuth Strategy
 const callbackURL = process.env.NODE_ENV === 'production' 
   ? `https://${process.env.REPLIT_DEV_DOMAIN}/auth/google/callback`
-  : `https://e90ca2a5-826d-4643-9333-6b53a4f7928d-00-2v0asdc3qu6kp.worf.replit.dev/auth/google/callback`;
+  : `http://localhost:${process.env.PORT || '5000'}/auth/google/callback`;
 
 console.log('🔧 OAuth Config:');
 console.log('  - Client ID:', process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing');
@@ -195,11 +195,8 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
+  const host = process.env.NODE_ENV === 'production' ? "0.0.0.0" : "localhost";
+  server.listen(port, host, () => {
+    log(`serving on http://${host}:${port}`);
   });
 })();
