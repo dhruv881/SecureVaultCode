@@ -36,23 +36,8 @@ export default function DocumentPreview({ document, isOpen, onClose, onDownload 
               <div className="space-y-4">
                 <div className="text-lg font-medium">PDF Preview</div>
                 <p className="text-muted-foreground">
-                  Your browser doesn't support PDF viewing. Please download or open in a new tab.
+                  Your browser doesn't support PDF viewing. Use the buttons below to open or download.
                 </p>
-                <div className="flex justify-center gap-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => window.open(fileUrl, '_blank')}
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Open in new tab
-                  </Button>
-                  {onDownload && (
-                    <Button onClick={() => onDownload(document)}>
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
-                  )}
-                </div>
               </div>
             </div>
           </object>
@@ -65,15 +50,7 @@ export default function DocumentPreview({ document, isOpen, onClose, onDownload 
         <div className="w-full max-h-[600px] bg-muted rounded-lg flex items-center justify-center">
           {imageError ? (
             <div className="text-center p-8">
-              <p className="text-muted-foreground">Unable to display image</p>
-              <Button 
-                variant="outline" 
-                className="mt-2" 
-                onClick={() => window.open(fileUrl, '_blank')}
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Open in new tab
-              </Button>
+              <p className="text-muted-foreground">Unable to display image. Use the buttons below to open or download.</p>
             </div>
           ) : (
             <img
@@ -95,21 +72,7 @@ export default function DocumentPreview({ document, isOpen, onClose, onDownload 
           <p className="text-muted-foreground">
             This file type cannot be previewed in the browser.
           </p>
-          <div className="flex justify-center gap-4">
-            <Button 
-              variant="outline" 
-              onClick={() => window.open(fileUrl, '_blank')}
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Open in new tab
-            </Button>
-            {onDownload && (
-              <Button onClick={() => onDownload(document)}>
-                <Download className="w-4 h-4 mr-2" />
-                Download
-              </Button>
-            )}
-          </div>
+          <p className="text-muted-foreground mt-2">Use the buttons below to open or download.</p>
         </div>
       </div>
     );

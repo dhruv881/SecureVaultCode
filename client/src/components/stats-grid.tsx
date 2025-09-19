@@ -9,8 +9,8 @@ export default function StatsGrid() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {[...Array(4)].map((_, i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {[...Array(3)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -58,18 +58,10 @@ export default function StatsGrid() {
       bgColor: "bg-accent/10",
       iconColor: "text-accent",
     },
-    {
-      title: "Security Score",
-      value: "98%",
-      icon: Shield,
-      bgColor: "bg-accent/10",
-      iconColor: "text-accent",
-      valueColor: "text-accent",
-    },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
       {statsData.map((stat, index) => {
         const Icon = stat.icon;
         
