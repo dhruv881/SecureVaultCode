@@ -34,12 +34,19 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Passport Google OAuth Strategy
+const callbackURL = process.env.NODE_ENV === 'production' 
+  ? `https://${process.env.REPLIT_DEV_DOMAIN}/auth/google/callback`
+  : `https://e90ca2a5-826d-4643-9333-6b53a4f7928d-00-2v0asdc3qu6kp.worf.replit.dev/auth/google/callback`;
+
+console.log('🔧 OAuth Config:');
+console.log('  - Client ID:', process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing');
+console.log('  - Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? '✅ Set' : '❌ Missing');
+console.log('  - Callback URL:', callbackURL);
+
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID!,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-  callbackURL: process.env.NODE_ENV === 'production' 
-    ? `https://${process.env.REPLIT_DEV_DOMAIN}/auth/google/callback`
-    : `https://e90ca2a5-826d-4643-9333-6b53a4f7928d-00-2v0asdc3qu6kp.worf.replit.dev/auth/google/callback`
+  callbackURL: callbackURL
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const user: User = {
@@ -63,11 +70,30 @@ passport.deserializeUser((user: any, done) => {
 });
 
 // Authentication routes
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+app.get('/auth/google', (req, res, next) => {
+  console.log('🚀 Starting Google OAuth flow');
+  console.log('  - Request URL:', req.url);
+  console.log('  - Host:', req.get('Host'));
+  console.log('  - Protocol:', req.protocol);
+  console.log('  - Full URL:', `${req.protocol}://${req.get('Host')}${req.url}`);
+  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+});
 
 app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
+  (req, res, next) => {
+    console.log('🔄 Google OAuth callback received');
+    console.log('  - Request URL:', req.url);
+    console.log('  - Host:', req.get('Host'));
+    console.log('  - Protocol:', req.protocol);
+    console.log('  - Query params:', req.query);
+    next();
+  },
+  passport.authenticate('google', { 
+    failureRedirect: '/login',
+    failureMessage: true
+  }),
   (req, res) => {
+    console.log('✅ OAuth success, redirecting to /');
     res.redirect('/');
   }
 );
