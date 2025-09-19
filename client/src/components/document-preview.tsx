@@ -26,11 +26,36 @@ export default function DocumentPreview({ document, isOpen, onClose, onDownload 
     if (document.mimeType.includes('pdf')) {
       return (
         <div className="w-full h-[600px] bg-muted rounded-lg">
-          <iframe
-            src={fileUrl}
+          <object
+            data={fileUrl}
+            type="application/pdf"
             className="w-full h-full rounded-lg"
             title={`Preview of ${document.originalName}`}
-          />
+          >
+            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+              <div className="space-y-4">
+                <div className="text-lg font-medium">PDF Preview</div>
+                <p className="text-muted-foreground">
+                  Your browser doesn't support PDF viewing. Please download or open in a new tab.
+                </p>
+                <div className="flex justify-center gap-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.open(fileUrl, '_blank')}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Open in new tab
+                  </Button>
+                  {onDownload && (
+                    <Button onClick={() => onDownload(document)}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </object>
         </div>
       );
     }
@@ -116,40 +141,30 @@ export default function DocumentPreview({ document, isOpen, onClose, onDownload 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto" data-testid="document-preview-modal">
         <DialogHeader>
-          <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <DialogTitle className="text-xl" data-testid="preview-document-title">
-                {document.originalName}
-              </DialogTitle>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Badge variant="outline">{document.category}</Badge>
-                <span>•</span>
-                <span>Uploaded {format(new Date(document.uploadedAt), "MMM d, yyyy")}</span>
-                {expiryStatus && (
-                  <>
-                    <span>•</span>
-                    <Badge variant={expiryStatus.variant}>{expiryStatus.label}</Badge>
-                  </>
-                )}
-              </div>
-              {document.tags && document.tags.length > 0 && (
-                <div className="flex items-center gap-1 flex-wrap">
-                  {document.tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
+          <div className="space-y-2">
+            <DialogTitle className="text-xl" data-testid="preview-document-title">
+              {document.originalName}
+            </DialogTitle>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Badge variant="outline">{document.category}</Badge>
+              <span>•</span>
+              <span>Uploaded {format(new Date(document.uploadedAt), "MMM d, yyyy")}</span>
+              {expiryStatus && (
+                <>
+                  <span>•</span>
+                  <Badge variant={expiryStatus.variant}>{expiryStatus.label}</Badge>
+                </>
               )}
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={onClose}
-              data-testid="close-preview-button"
-            >
-              <X className="w-4 h-4" />
-            </Button>
+            {document.tags && document.tags.length > 0 && (
+              <div className="flex items-center gap-1 flex-wrap">
+                {document.tags.map((tag, index) => (
+                  <Badge key={index} variant="secondary" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         </DialogHeader>
         

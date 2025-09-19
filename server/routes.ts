@@ -5,6 +5,7 @@ import { insertDocumentSchema, insertReminderSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
+import { scanDocumentForExpiry, shouldScanDocument } from "./document-scanner";
 
 const upload = multer({ 
   dest: 'uploads/',
@@ -96,7 +97,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid document data", details: result.error });
       }
 
-      const document = await storage.createDocument(result.data);
+      let document = await storage.createDocument(result.data);
+
+      // Try to automatically scan for expiry date if not provided and it's an identity document
+      if (!document.expiryDate && shouldScanDocument(document.originalName, document.category)) {
+        try {
+          console.log(`Scanning document ${document.originalName} for expiry date...`);
+          const filePath = path.join(process.cwd(), 'uploads', document.filename);
+          const enableRemoteScanning = process.env.ENABLE_REMOTE_OCR === 'true';
+          const scanResult = await scanDocumentForExpiry(filePath, document.mimeType, enableRemoteScanning);
+          
+          if (scanResult.expiryDate && scanResult.confidence > 0.7) {
+            console.log(`Found expiry date: ${scanResult.expiryDate} (confidence: ${scanResult.confidence})`);
+            // Update the document with the scanned expiry date
+            const updatedDocument = await storage.updateDocument(document.id, DEMO_USER_ID, {
+              expiryDate: new Date(scanResult.expiryDate)
+            });
+            if (updatedDocument) {
+              document = updatedDocument;
+            }
+          }
+        } catch (error) {
+          console.warn('Document scanning failed:', error);
+          // Continue without expiry date - don't fail the upload
+        }
+      }
 
       // Create automatic reminders for documents with expiry dates
       if (document.expiryDate) {

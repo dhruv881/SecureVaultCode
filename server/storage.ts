@@ -1,5 +1,8 @@
 import { type User, type InsertUser, type Document, type InsertDocument, type Reminder, type InsertReminder, type Category, type InsertCategory } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { documents, users, reminders, categories } from "@shared/schema";
+import { eq, and, desc, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -27,6 +30,7 @@ export interface IStorage {
   // Categories
   getCategories(): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
+  getCategoriesWithCounts(userId: string): Promise<Array<Category & { count: number }>>;
 
   // Statistics
   getDocumentStats(userId: string): Promise<{
@@ -210,13 +214,13 @@ export class MemStorage implements IStorage {
     return Array.from(this.categories.values());
   }
 
-  async getCategoriesWithCounts(userId: string): Promise<(Category & { documentCount: number })[]> {
+  async getCategoriesWithCounts(userId: string): Promise<Array<Category & { count: number }>> {
     const categories = Array.from(this.categories.values());
     const userDocuments = await this.getDocuments(userId);
     
     return categories.map(category => {
-      const documentCount = userDocuments.filter(doc => doc.category === category.name).length;
-      return { ...category, documentCount };
+      const count = userDocuments.filter(doc => doc.category === category.name).length;
+      return { ...category, count };
     });
   }
 
@@ -272,4 +276,6 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Export PostgreSQL storage implementation
+import { PostgresStorage } from "./postgres-storage";
+export const storage = new PostgresStorage();
