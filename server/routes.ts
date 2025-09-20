@@ -120,15 +120,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!document.expiryDate && shouldScanDocument(document.originalName, document.category)) {
         try {
           console.log(`Scanning document ${document.originalName} for expiry date...`);
+          console.log(`Document category: ${document.category}, MIME type: ${document.mimeType}`);
+          console.log(`OCR enabled: ${process.env.ENABLE_REMOTE_OCR === 'true'}`);
           const filePath = path.join(process.cwd(), 'uploads', document.filename);
           const enableRemoteScanning = process.env.ENABLE_REMOTE_OCR === 'true';
           const scanResult = await scanDocumentForExpiry(filePath, document.mimeType, enableRemoteScanning);
+          console.log(`Scan result:`, scanResult);
           
-          if (scanResult.expiryDate && scanResult.confidence > 0.7) {
+          if (scanResult.expiryDate && scanResult.confidence > 0.3) {
             console.log(`Found expiry date: ${scanResult.expiryDate} (confidence: ${scanResult.confidence})`);
-            // Update the document with the scanned expiry date
+            console.log(`Document type: ${scanResult.documentType}, Number: ${scanResult.documentNumber}`);
+            
+            // Prepare metadata with OCR results
+            const metadata = {
+              ...document.metadata as any,
+              documentType: scanResult.documentType,
+              documentNumber: scanResult.documentNumber,
+              ocrConfidence: scanResult.confidence,
+              scannedAt: new Date().toISOString()
+            };
+            
+            // Update the document with the scanned expiry date and metadata
             const updatedDocument = await storage.updateDocument(document.id, getUserId(req), {
-              expiryDate: new Date(scanResult.expiryDate)
+              expiryDate: new Date(scanResult.expiryDate),
+              metadata
             });
             if (updatedDocument) {
               document = updatedDocument;
@@ -162,6 +177,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete document" });
+    }
+  });
+
+  // Test route to manually add expiry dates (for development/testing)
+  app.post("/api/documents/:id/test-expiry", async (req, res) => {
+    try {
+      const { expiryDate } = req.body;
+      const updatedDocument = await storage.updateDocument(req.params.id, getUserId(req), {
+        expiryDate: new Date(expiryDate),
+        metadata: {
+          documentType: 'passport',
+          ocrConfidence: 1.0,
+          scannedAt: new Date().toISOString(),
+          testData: true
+        }
+      });
+      
+      if (!updatedDocument) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      
+      res.json(updatedDocument);
+    } catch (error) {
+      console.error('Test expiry update error:', error);
+      res.status(500).json({ error: "Failed to update expiry date" });
     }
   });
 

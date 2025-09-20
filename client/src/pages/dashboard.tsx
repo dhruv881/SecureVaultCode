@@ -9,6 +9,8 @@ import { useQuery } from "@tanstack/react-query";
 import StatsGrid from "@/components/stats-grid";
 import UploadZone from "@/components/upload-zone";
 import DocumentCard from "@/components/document-card";
+import ExpiryDashboard from "@/components/expiry-dashboard";
+import TestExpiry from "@/components/test-expiry";
 import { Document } from "@shared/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -133,6 +135,13 @@ export default function Dashboard() {
       <div className="flex-1 p-6 overflow-auto">
         {/* Stats Cards */}
         <StatsGrid />
+
+        {/* Expiry Dashboard - Show if there are documents with expiry dates */}
+        {documents.some(doc => doc.expiryDate) && (
+          <div className="mb-8">
+            <ExpiryDashboard onViewDocument={handleView} />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column */}
@@ -314,6 +323,9 @@ export default function Dashboard() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Test Expiry Component (Development) */}
+            <TestExpiry />
 
             {/* Security Status */}
             <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200">

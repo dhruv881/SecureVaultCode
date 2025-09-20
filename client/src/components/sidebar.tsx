@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Shield, BarChart3, Upload, FolderOpen, Bell, IdCard, Receipt, Heart, Plane, ShieldCheck, FileText, Settings, User, LogOut } from "lucide-react";
+import { Shield, BarChart3, Upload, FolderOpen, Bell, IdCard, Receipt, Heart, Plane, ShieldCheck, FileText, Settings, User, LogOut, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,7 @@ export default function Sidebar() {
     { path: "/", label: "Dashboard", icon: BarChart3 },
     { path: "/upload", label: "Upload Documents", icon: Upload },
     { path: "/documents", label: "All Documents", icon: FolderOpen },
+    { path: "/expiry", label: "Expiry Tracker", icon: Calendar },
     { path: "/reminders", label: "Reminders", icon: Bell, badge: activeRemindersCount > 0 ? activeRemindersCount : undefined },
   ];
 

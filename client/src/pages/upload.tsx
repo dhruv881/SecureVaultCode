@@ -17,6 +17,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import UploadZone from "@/components/upload-zone";
+import OcrInfo from "@/components/ocr-info";
 import { Document } from "@shared/schema";
 
 export default function Upload() {
@@ -154,6 +155,9 @@ export default function Upload() {
                     />
                   </div>
                 </div>
+
+                {/* OCR Info */}
+                <OcrInfo />
               </div>
 
               {/* Tags */}

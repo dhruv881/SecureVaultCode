@@ -8,6 +8,7 @@ import Dashboard from "@/pages/dashboard";
 import Upload from "@/pages/upload";
 import Documents from "@/pages/documents";
 import Reminders from "@/pages/reminders";
+import ExpiryPage from "@/pages/expiry";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/sidebar";
 import LoginPage from "@/pages/login";
@@ -21,6 +22,7 @@ function AuthenticatedApp() {
           <Route path="/" component={Dashboard} />
           <Route path="/upload" component={Upload} />
           <Route path="/documents" component={Documents} />
+          <Route path="/expiry" component={ExpiryPage} />
           <Route path="/reminders" component={Reminders} />
           <Route component={NotFound} />
         </Switch>
